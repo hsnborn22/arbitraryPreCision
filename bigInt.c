@@ -183,6 +183,69 @@ int isBigIntZero(bigInt bVar) {
     return returnValue; 
 }
 
+// this function checks if the first input int1 is bigger than the second input int2
+// it returns 0 if int1 is not bigger than int2 and returns 1 if int1 is bigger than int2.
+int isBiggerThan(bigInt * int1, bigInt * int2) {
+    int biggerFlag = 0;
+    if (int1->digitCount > int2->digitCount) {
+        biggerFlag = 1;
+    } else if (int1->digitCount == int2->digitCount) {
+        for (int i = 0; i < int1->digitCount; i++) {
+            if (int1->digits[i] > int2->digits[i]) {
+                biggerFlag = 1;
+                break;
+            } else if (int1->digits[i] < int2->digits[i]) {
+                break;
+            }
+        }
+    }
+    return biggerFlag;
+}
+
+bigInt * subBigInts(bigInt * int1, bigInt * int2) {
+    bigInt * output = calloc(1,sizeof(struct BIG_INT_STRUCT));
+    // case in which both numbers are positive.
+    if (int1->sign == 1 && int2->sign == 1) {
+        // We are going to write the logic only for the case in which int1 is greater than int2, and cover all other cases using this case only.
+        // if int1 > int2
+        if (isBiggerThan(int1, int2)) {
+            output->sign = 1; // if a > b, a-b > 0
+            int * digitCopy1 = calloc(sizeof(int1->digitCount), sizeof(int));
+            int * digitCopy2 = calloc(sizeof(int2->digitCount), sizeof(int));
+            // we copy the digit arrays of int1 and int2 into digitCopy1 and digitCopy2 and then reverse them.
+            memcpy(digitCopy1, int1->digits, int1->digitCount * sizeof(int));
+            memcpy(digitCopy2, int2->digits, int2->digitCount * sizeof(int));
+            reverseArray(digitCopy1, int1->digitCount);
+            reverseArray(digitCopy2, int2->digitCount);
+            // allocate space for the output digit array
+            int * outputDigitArray = calloc(1, sizeof(int) * int1->digitCount); // we make it hold maxLength integers: there are some cases in which it might be maxlength+1 long but we'll hand it manually with realloc if it occurs.
+          
+            int carry = 0;
+            for (int i = 0; i < int1->digitCount; i++) {
+                int sum = 0;
+                if (i < int2->digitCount) {
+                    sum = digitCopy1[i] - digitCopy2[i] + carry;
+                } else {
+                    sum = digitCopy1[i] + carry;
+                }
+                if (sum < 0) {
+                    outputDigitArray[i] = sum + 10;
+                    carry = -1;
+                } else {
+                    outputDigitArray[i] = sum;
+                    carry = 0;
+                } 
+            }
+            output->digitCount = int1->digitCount;
+            reverseArray(outputDigitArray, output->digitCount);
+            output->digits = outputDigitArray;
+            char * repr = getDigitStringFrom(outputDigitArray, output->digitCount, 1);
+            output->representation = repr;
+        }
+    } 
+    return output;
+}
+
 bigInt * sumBigInts(bigInt * int1, bigInt * int2) {
     bigInt * output = calloc(1,sizeof(struct BIG_INT_STRUCT));
     if (int1->sign == 1 && int2->sign == 1) {
@@ -233,7 +296,7 @@ bigInt * sumBigInts(bigInt * int1, bigInt * int2) {
         memcpy(output, int2, sizeof(struct BIG_INT_STRUCT));
     } else if (int2->sign == 0) {
         memcpy(output, int1, sizeof(struct BIG_INT_STRUCT));
-    } else if (int1->sign == -1 && int2->sign == -2) {
+    } else if (int1->sign == -1 && int2->sign == -1) {
         int1->sign = 1;
         int2->sign = 1;
         bigInt * temp = sumBigInts(int1, int2);
@@ -251,9 +314,9 @@ bigInt * sumBigInts(bigInt * int1, bigInt * int2) {
 }
 
 int main(void) {
-    bigInt bigNum1 = initBigInt("0");
-    bigInt bigNum2 = initBigInt("6");
-    bigInt * bigNum3 = sumBigInts(&bigNum1, &bigNum2);
+    bigInt bigNum1 = initBigInt("1748");
+    bigInt bigNum2 = initBigInt("799");
+    bigInt * bigNum3 = subBigInts(&bigNum1, &bigNum2);
 
     printf(" Representation: %s\n", bigNum3->representation);
     free(bigNum1.representation);
