@@ -16,6 +16,9 @@ typedef struct BIG_INT_STRUCT {
     int digitCount;  // this is the number of digits of the number.
 } bigInt; 
 
+bigInt * sumBigInts(bigInt * int1, bigInt * int2);
+bigInt * subBigInts(bigInt * int1, bigInt * int2);
+
 char * getDigitStringFrom(int * digits, int digitLength, int sign) {
     // save a flag that indicates if the number is negative in isNegative.
     int isNegative = (sign  == -1);
@@ -432,10 +435,80 @@ bigInt * sumBigInts(bigInt * int1, bigInt * int2) {
     return output;
 }
 
+/* ==================== naiveMultiplication Function ============================= 
+
+-INPUTS: The function has two inputs of type bigInt * (bigInt pointer),int1 and
+int2. These two inputs are the two bigInts we want to multiply.
+-OUTPUT: The product of the two inputs, int1 * int2. 
+
+============================================================================== */
+
+bigInt * naiveMultiplication(bigInt * int1, bigInt * int2) {
+    bigInt * output = calloc(1,sizeof(struct BIG_INT_STRUCT));
+    
+    int * digitCopy1 = calloc(int1->digitCount, sizeof(int));
+    int * digitCopy2 = calloc(int2->digitCount, sizeof(int));
+    // we copy the digit arrays of int1 and int2 into digitCopy1 and digitCopy2 and thenn reverse them , so that we get least significant values first
+    memcpy(digitCopy1, int1->digits, int1->digitCount * sizeof(int));
+    memcpy(digitCopy2, int2->digits, int2->digitCount * sizeof(int));
+    reverseArray(digitCopy1, int1->digitCount);
+    reverseArray(digitCopy2, int2->digitCount);
+    
+    // we loop over the digits of int2 and allocate space for an array of bigInts
+    bigInt ** partialProductsArray = malloc(sizeof(struct BIG_INT_STRUCT*) * int2->digitCount);
+    for (int i = 0; i < int2->digitCount; i++) {
+        // for each digit of int2, we create a partial product; we will sum all the partial products at the end
+        bigInt * currentPartialProduct = calloc(1,sizeof(struct BIG_INT_STRUCT));
+        currentPartialProduct->sign = 1;
+        currentPartialProduct->digitCount = int1->digitCount;
+        int * currppDigits = calloc(int1->digitCount, sizeof(int));
+        int carry = 0;
+        for (int j = 0; j < int1->digitCount; j++) {
+            int p = (digitCopy1[j] * digitCopy2[i]) + carry; 
+            carry = p / 10; 
+            currppDigits[j] = p % 10;
+        }
+        if (carry != 0) {
+            // if the last carry is not 0, we set the last digit to be said carry (i.e. 9 x 999 , the last carry is 8 and in fact 9x999=8991
+            currentPartialProduct->digitCount ++;
+            currppDigits = realloc(currppDigits, sizeof(int) * (int1->digitCount + 1));
+            currppDigits[int1->digitCount] = carry;
+        }
+        
+        // we reverse the array back to make it match the standard used in bigNum data structure.
+        reverseArray(currppDigits, currentPartialProduct->digitCount);
+        // we now shift the result of the previous step i number of times to the left
+        decimalLeftShiftArray(&currppDigits, currentPartialProduct->digitCount, i);
+        currentPartialProduct->digitCount += i; // take into account the zeros we added in counting the numbers of digits 
+        currentPartialProduct->digits = currppDigits;
+        char * tempRepr = getDigitStringFrom(currppDigits, currentPartialProduct->digitCount, 1);
+        currentPartialProduct->representation = tempRepr;
+        partialProductsArray[i] = currentPartialProduct;
+    }
+    int * zeroDig = calloc(1,sizeof(int));
+    char * zeroStr = malloc(2*sizeof(char));
+    zeroStr[0] = '0';
+    zeroStr[1] = '\0';
+    output->sign = 0;
+    output->digitCount = 1;
+    output->representation = zeroStr;
+    output->digits = zeroDig;
+    // looping over partialProductsArray and summing all of them
+    for (int i = 0; i < int2->digitCount; i++) {
+        bigInt * tempSums = sumBigInts(output, partialProductsArray[i]);
+        output->sign = tempSums->sign;
+        output->digitCount = tempSums->digitCount; 
+        output->representation = tempSums->representation;
+        output->digits = tempSums->digits;
+    }
+    output->sign = int1->sign * int2-> sign; // the sign of the output is the product of the signs.
+    return output;
+}
+
 int main(void) {
     bigInt bigNum1 = initBigInt("1001");
     bigInt bigNum2 = initBigInt("799");
-    bigInt * bigNum3 = subBigInts(&bigNum1, &bigNum2);
+    bigInt * bigNum3 = naiveMultiplication(&bigNum1, &bigNum2);
 
     printf(" Representation: %s\n Digit Count: %d \n Sign: %d\n", bigNum3->representation, bigNum3->digitCount, bigNum3->sign);
     

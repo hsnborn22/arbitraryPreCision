@@ -97,3 +97,10 @@ int calculateUselessZeros(int * array, int arrayLength) {
     }
     return zerosBeforeCount;
 }
+
+void decimalLeftShiftArray(int ** array, int length, int amount) {
+    *array = realloc(*array, sizeof(int) * (length + amount));
+    for (int i = 0; i < amount; i++) {
+        (*array)[i+length] = 0;
+    }
+}

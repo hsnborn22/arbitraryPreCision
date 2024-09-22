@@ -4,3 +4,4 @@ void reverseArray(int arr[], int size);
 char * addMinus(char * string, int n);
 int * removeUnnecessaryZeros(int * array, int arrayLength);
 int calculateUselessZeros(int * array, int arrayLength);
+void decimalLeftShiftArray(int ** array, int length, int amount); 
