@@ -238,9 +238,16 @@ bigInt * subBigInts(bigInt * int1, bigInt * int2) {
             }
             output->digitCount = int1->digitCount;
             reverseArray(outputDigitArray, output->digitCount);
-            output->digits = outputDigitArray;
-            char * repr = getDigitStringFrom(outputDigitArray, output->digitCount, 1);
+            // now we have the result, with the addition of some unnecessary zeros; e.g. 2001 - 1799 = 0202 and digitcount=4, but we want just 202 and digitCount = 3
+            // let's remove them  
+            int * newOutput = removeUnnecessaryZeros(outputDigitArray, output->digitCount);
+            int zerosBefore = calculateUselessZeros(outputDigitArray, output->digitCount);
+            output->digitCount -= zerosBefore;
+            free(outputDigitArray);
+            output->digits = newOutput;
+            char * repr = getDigitStringFrom(newOutput, output->digitCount, 1);
             output->representation = repr;
+            
         }
     } 
     return output;
@@ -252,6 +259,7 @@ bigInt * sumBigInts(bigInt * int1, bigInt * int2) {
         output->sign = 1; // a sum of positive numbers is positive
         int * digitCopy1 = calloc(int1->digitCount, sizeof(int));
         int * digitCopy2 = calloc(int2->digitCount, sizeof(int));
+        // We loop starting from the first non-zero value up to the end of the array and save the values in output.        int * digitCopy2 = calloc(int2->digitCount, sizeof(int));
         // we copy the digit arrays of int1 and int2 into digitCopy1 and digitCopy2 and thenn reverse them , so that we get least significant values first
         memcpy(digitCopy1, int1->digits, int1->digitCount * sizeof(int));
         memcpy(digitCopy2, int2->digits, int2->digitCount * sizeof(int));
@@ -314,11 +322,15 @@ bigInt * sumBigInts(bigInt * int1, bigInt * int2) {
 }
 
 int main(void) {
-    bigInt bigNum1 = initBigInt("1748");
+    bigInt bigNum1 = initBigInt("1001");
     bigInt bigNum2 = initBigInt("799");
     bigInt * bigNum3 = subBigInts(&bigNum1, &bigNum2);
 
-    printf(" Representation: %s\n", bigNum3->representation);
+    printf(" Representation: %s\n Digit Count: %d \n Sign: %d\n", bigNum3->representation, bigNum3->digitCount, bigNum3->sign);
+    
+    for (int i = 0; i < bigNum3->digitCount; i++) {
+        printf("%d \n", bigNum3->digits[i]);
+    }
     free(bigNum1.representation);
     free(bigNum1.digits);
     free(bigNum2.digits);

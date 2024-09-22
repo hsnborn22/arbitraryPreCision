@@ -63,3 +63,37 @@ char * addMinus(char * string, int n) {
     output[n+1] = '\0';
     return output;
 }
+
+int * removeUnnecessaryZeros(int * array, int arrayLength) {
+    // We are going to loop through the array and truncate all the zeros at the beginning, i.e. as soon as we encounter a non-zero value we make the array start there.
+    // We use a counter that counts how many 0s we encounter before the first non-zero value, and we initialize it to 0.
+    int zerosBeforeCount = 0;
+    for (int i = 0; i < arrayLength; i++) {
+        if (array[i] != 0) {
+            break;
+        } else {
+            zerosBeforeCount++;
+        }
+    }
+    // We allocate space for our output array
+    int * output = calloc(zerosBeforeCount, sizeof(int));
+    // We loop starting from the first non-zero value up to the end of the array and save the values in output.
+    for (int j = zerosBeforeCount; j < arrayLength; j++) {
+        output[j - zerosBeforeCount] = array[j];
+    }
+    return output;
+}
+
+int calculateUselessZeros(int * array, int arrayLength) {
+    // We are going to loop through the array and truncate all the zeros at the beginning, i.e. as soon as we encounter a non-zero value we make the array start there.
+    // We use a counter that counts how many 0s we encounter before the first non-zero value, and we initialize it to 0.
+    int zerosBeforeCount = 0;
+    for (int i = 0; i < arrayLength; i++) {
+        if (array[i] != 0) {
+            break;
+        } else {
+            zerosBeforeCount++;
+        }
+    }
+    return zerosBeforeCount;
+}
