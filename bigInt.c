@@ -183,32 +183,83 @@ int isBigIntZero(bigInt bVar) {
     return returnValue; 
 }
 
-// this function checks if the first input int1 is bigger than the second input int2
-// it returns 0 if int1 is not bigger than int2 and returns 1 if int1 is bigger than int2.
-int isBiggerThan(bigInt * int1, bigInt * int2) {
-    int biggerFlag = 0;
+/* ==================== bigIntCmp Function ============================= 
+
+-INPUTS: The function has two inputs of type bigInt * (bigInt pointer),
+int1 and int2. These two inputs are the two bigInts we want to compare.
+-OUTPUT: The function has one output (an int). The function will return 
+0 if the two inputs are equal (i.e. int1 == int2), 1 if int1 > int2 and
+-1 if int1 < int2. The output convention is very similar to the C strcmp function.
+
+======================================================================= */
+
+int bigIntCmp(bigInt * int1, bigInt * int2) { 
+    // initialize the compare flag we will return to 0.
+    int cmpFlag = 0;
     if (int1->digitCount > int2->digitCount) {
-        biggerFlag = 1;
+        cmpFlag = 1;
     } else if (int1->digitCount == int2->digitCount) {
         for (int i = 0; i < int1->digitCount; i++) {
             if (int1->digits[i] > int2->digits[i]) {
-                biggerFlag = 1;
+                cmpFlag = 1;
                 break;
             } else if (int1->digits[i] < int2->digits[i]) {
+                cmpFlag = -1;
                 break;
             }
         }
+    } else if (int1->digitCount < int2->digitCount) {
+        cmpFlag = -1;
     }
-    return biggerFlag;
+    return cmpFlag;
+}
+
+/* ==================== bigIntIsLessThan Function ============================= 
+
+-INPUTS: The function has two inputs of type bigInt * (bigInt pointer),int1 and
+int2. These two inputs are the two bigInts we want to compare.
+-OUTPUT: The function has one output (an int), to be interpreted as a boolean value.
+It will return 1 if int1 < int2, and it will return 0 if int1 >= int2.
+
+============================================================================== */
+
+int bigIntIsLessThan(bigInt* int1, bigInt * int2) {
+    return (bigIntCmp(int1,int2) == -1) ? 1:0;
+}
+
+/* ==================== bigIntIsGreaterThan Function ============================= 
+
+-INPUTS: The function has two inputs of type bigInt * (bigInt pointer),int1 and
+int2. These two inputs are the two bigInts we want to compare.
+-OUTPUT: The function has one output (an int), to be interpreted as a boolean value.
+It will return 1 if int1 > int2, and it will return 0 in all other cases.
+
+============================================================================== */
+
+int bigIntIsGreaterThan(bigInt* int1, bigInt * int2) {
+    return (bigIntCmp(int1,int2) == 1) ? 1:0;
+}
+
+/* ==================== bigIntIsEqual Function ============================= 
+
+-INPUTS: The function has two inputs of type bigInt * (bigInt pointer),int1 and
+int2. These two inputs are the two bigInts we want to compare.
+-OUTPUT: The function has one output (an int), to be interpreted as a boolean value.
+It will return 0 if int1 != int2, and it will return 1 if int1 == int2.
+
+============================================================================== */
+
+int bigIntIsEqual(bigInt* int1, bigInt * int2) {
+    return (bigIntCmp(int1,int2) == 0) ? 1:0;
 }
 
 bigInt * subBigInts(bigInt * int1, bigInt * int2) {
     bigInt * output = calloc(1,sizeof(struct BIG_INT_STRUCT));
-    // case in which both numbers are positive.
+    // case #1: both numbers are positive.
     if (int1->sign == 1 && int2->sign == 1) {
         // We are going to write the logic only for the case in which int1 is greater than int2, and cover all other cases using this case only.
         // if int1 > int2
-        if (isBiggerThan(int1, int2)) {
+        if (bigIntIsGreaterThan(int1, int2)) {
             output->sign = 1; // if a > b, a-b > 0
             int * digitCopy1 = calloc(sizeof(int1->digitCount), sizeof(int));
             int * digitCopy2 = calloc(sizeof(int2->digitCount), sizeof(int));
@@ -248,8 +299,54 @@ bigInt * subBigInts(bigInt * int1, bigInt * int2) {
             char * repr = getDigitStringFrom(newOutput, output->digitCount, 1);
             output->representation = repr;
             
+        } else if (bigIntIsEqual(int1,int2)) {
+            // sub-case #2: if the two numbers are equal, return 0
+            int * fDig = calloc(1,sizeof(int)); // array of size one that will store the digits of output ([0]). By callocing it we already init it to 0 so we dont need to modify its values.
+            char * fStr = malloc(sizeof(char)*2); // the string representation of our output; it will be comprised of only two chars, the 0 value and the null terminator (\0).
+            fStr[0] = '0';
+            fStr[1] = '\0';
+            output->sign = 0; // set the sign to 0
+            output->digitCount = 1; // set the digit count to 1.
+            output->digits = fDig; 
+            output->representation = fStr;
+        } else if (bigIntIsLessThan(int1,int2)) {
+            // sub-case #3: if int1 < int2, we return - (int2 - int1) and compute int2-int1 with the sub-case #1 logic.
+            bigInt * temp = subBigInts(int2,int1); 
+            char * tempRepr = getDigitStringFrom(temp->digits, temp->digitCount, -1);
+            output->representation = tempRepr;
+            output->digits = temp->digits;
+            output->sign = -1;
+            output->digitCount = temp->digitCount;
+            free(temp->representation); 
         }
-    } 
+    } else if (int1->sign == -1 && int2->sign == -1) {
+        // case #2: both numbers are negative.
+        // (-a) - (-b) = b -a, so we just compute b-a and use case#1 logic.
+        bigInt * temp = subBigInts(int2,int1);
+        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT));
+        free(temp);
+    } else if (int1->sign == 1 && int2->sign == -1) {
+        // case #3: int1 > 0 and int2 < 0
+        // i.e. b = -|b| and a = |a|
+        // |a| - (-|b|) = |a| + |b|; we compute the sum of the abs values.
+        int2->sign = 1; // temporarily switch the sign of int2.
+        bigInt * temp = sumBigInts(int1, int2);
+        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT));
+        free(temp);
+        int2->sign = -1;
+    } else if (int1->sign == -1 && int2->sign == 1) {
+        // case #4: int1 < 0 and int2 > 0
+        // We compute -|a| + (-|b|) with sumBigInts
+        int2->sign = -1; // as in the case before, temporairily set sign to be -1
+        bigInt * temp = sumBigInts(int1,int2); // compute the sum of the two negative values.
+        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT)); // copy the result in output.
+        free(temp); // free the temporary bigInt.
+        int2->sign = 1;
+    } else if (int1->sign == 0) {
+        memcpy(output, int2, sizeof(struct BIG_INT_STRUCT));
+    } else if (int2->sign == 0) {
+        memcpy(output,int1, sizeof(struct BIG_INT_STRUCT));
+    }
     return output;
 }
 
@@ -317,6 +414,20 @@ bigInt * sumBigInts(bigInt * int1, bigInt * int2) {
         output->digitCount = temp->digitCount;
         free(temp);
         return output;
+    } else if (int1->sign == -1 && int2->sign == 1) {
+        // if int1 < 0 and int2 > 0, we compute int2 - int1
+        int1->sign = 1; // temp.set int1 sign to be 1.
+        bigInt * temp = sumBigInts(int2,int1); // compute the sub of the two values. (int2 - int1)
+        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT)); // copy the result in output.
+        free(temp); // free the temporary bigInt.
+        int1->sign = -1;
+    } else if (int1->sign == 1 && int2->sign == -1) {
+        // the case is totally analogous as the one above:
+        int2->sign = 1; // as in the case before, temp. set sign to be 1
+        bigInt * temp = subBigInts(int1,int2); // compute int1 - int2.
+        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT)); // copy the result in output.
+        free(temp); // free the temporary bigInt.
+        int2->sign = -1;
     }
     return output;
 }
