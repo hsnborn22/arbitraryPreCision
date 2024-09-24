@@ -171,6 +171,16 @@ bigInt * copyBigInt(bigInt * numToCopy) {
     return result;
 }
 
+void copyBigIntTo(bigInt * destination, bigInt * numToCopy) {
+    int isNegative = (numToCopy->sign  == -1);
+    destination->digitCount = numToCopy->digitCount; 
+    destination->sign = numToCopy->sign; 
+    destination->representation = malloc(sizeof(char)*(numToCopy->digitCount + isNegative+1));
+    strcpy(destination->representation, numToCopy->representation);
+    destination->digits = malloc(sizeof(int) * (numToCopy->digitCount));
+    memcpy(destination->digits, numToCopy->digits, sizeof(char)*(numToCopy->digitCount + isNegative + 1));
+}
+
 int isBigIntPositive(bigInt bVar) {
     int returnValue = (bVar.sign == 1) ? 1 : 0;
     return returnValue; 
@@ -298,6 +308,8 @@ bigInt * subBigInts(bigInt * int1, bigInt * int2) {
             int zerosBefore = calculateUselessZeros(outputDigitArray, output->digitCount);
             output->digitCount -= zerosBefore;
             free(outputDigitArray);
+            free(digitCopy1);
+            free(digitCopy2);
             output->digits = newOutput;
             char * repr = getDigitStringFrom(newOutput, output->digitCount, 1);
             output->representation = repr;
@@ -317,24 +329,32 @@ bigInt * subBigInts(bigInt * int1, bigInt * int2) {
             bigInt * temp = subBigInts(int2,int1); 
             char * tempRepr = getDigitStringFrom(temp->digits, temp->digitCount, -1);
             output->representation = tempRepr;
-            output->digits = temp->digits;
+            output->digits = malloc(sizeof(int) * temp->digitCount);
+            memcpy(output->digits, temp->digits, sizeof(int) * temp->digitCount);
             output->sign = -1;
             output->digitCount = temp->digitCount;
             free(temp->representation); 
+            free(temp->digits);
+            free(temp);
         }
     } else if (int1->sign == -1 && int2->sign == -1) {
         // case #2: both numbers are negative.
         // (-a) - (-b) = b -a, so we just compute b-a and use case#1 logic.
         bigInt * temp = subBigInts(int2,int1);
-        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT));
+        copyBigIntTo(output, temp);
+        free(temp->representation);
+        free(temp->digits);
         free(temp);
+
     } else if (int1->sign == 1 && int2->sign == -1) {
         // case #3: int1 > 0 and int2 < 0
         // i.e. b = -|b| and a = |a|
         // |a| - (-|b|) = |a| + |b|; we compute the sum of the abs values.
         int2->sign = 1; // temporarily switch the sign of int2.
         bigInt * temp = sumBigInts(int1, int2);
-        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT));
+        copyBigIntTo(output, temp);
+        free(temp->representation);
+        free(temp->digits);
         free(temp);
         int2->sign = -1;
     } else if (int1->sign == -1 && int2->sign == 1) {
@@ -342,13 +362,15 @@ bigInt * subBigInts(bigInt * int1, bigInt * int2) {
         // We compute -|a| + (-|b|) with sumBigInts
         int2->sign = -1; // as in the case before, temporairily set sign to be -1
         bigInt * temp = sumBigInts(int1,int2); // compute the sum of the two negative values.
-        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT)); // copy the result in output.
+        copyBigIntTo(output, temp);
+        free(temp->representation);
+        free(temp->digits);
         free(temp); // free the temporary bigInt.
         int2->sign = 1;
     } else if (int1->sign == 0) {
-        memcpy(output, int2, sizeof(struct BIG_INT_STRUCT));
+        copyBigIntTo(output, int2);
     } else if (int2->sign == 0) {
-        memcpy(output,int1, sizeof(struct BIG_INT_STRUCT));
+        copyBigIntTo(output, int1);
     }
     return output;
 }
@@ -398,12 +420,14 @@ bigInt * sumBigInts(bigInt * int1, bigInt * int2) {
         }
         reverseArray(outputDigitArray, output->digitCount);
         output->digits = outputDigitArray;
+        free(digitCopy1);
+        free(digitCopy2);
         char * repr = getDigitStringFrom(outputDigitArray, output->digitCount, 1);
         output->representation = repr;
     } else if (int1->sign == 0) {
-        memcpy(output, int2, sizeof(struct BIG_INT_STRUCT));
+        copyBigIntTo(output, int2);
     } else if (int2->sign == 0) {
-        memcpy(output, int1, sizeof(struct BIG_INT_STRUCT));
+        copyBigIntTo(output, int1);
     } else if (int1->sign == -1 && int2->sign == -1) {
         int1->sign = 1;
         int2->sign = 1;
@@ -421,14 +445,18 @@ bigInt * sumBigInts(bigInt * int1, bigInt * int2) {
         // if int1 < 0 and int2 > 0, we compute int2 - int1
         int1->sign = 1; // temp.set int1 sign to be 1.
         bigInt * temp = sumBigInts(int2,int1); // compute the sub of the two values. (int2 - int1)
-        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT)); // copy the result in output.
+        copyBigIntTo(output, temp);
+        free(temp->representation);
+        free(temp->digits);
         free(temp); // free the temporary bigInt.
         int1->sign = -1;
     } else if (int1->sign == 1 && int2->sign == -1) {
         // the case is totally analogous as the one above:
         int2->sign = 1; // as in the case before, temp. set sign to be 1
         bigInt * temp = subBigInts(int1,int2); // compute int1 - int2.
-        memcpy(output, temp, sizeof(struct BIG_INT_STRUCT)); // copy the result in output.
+        copyBigIntTo(output, temp);
+        free(temp->representation);
+        free(temp->digits);
         free(temp); // free the temporary bigInt.
         int2->sign = -1;
     }
@@ -496,28 +524,41 @@ bigInt * naiveMultiplication(bigInt * int1, bigInt * int2) {
     // looping over partialProductsArray and summing all of them
     for (int i = 0; i < int2->digitCount; i++) {
         bigInt * tempSums = sumBigInts(output, partialProductsArray[i]);
-        output->sign = tempSums->sign;
-        output->digitCount = tempSums->digitCount; 
-        output->representation = tempSums->representation;
-        output->digits = tempSums->digits;
+        free(output->digits);
+        free(output->representation);
+        copyBigIntTo(output, tempSums);
+        free(tempSums->digits);
+        free(tempSums->representation);
+        free(tempSums);
     }
+    
+    for (int i = 0; i < int2->digitCount; i++) {
+        free(partialProductsArray[i]->representation);
+        free(partialProductsArray[i]->digits);
+        free(partialProductsArray[i]);
+    }
+    free(partialProductsArray);
     output->sign = int1->sign * int2-> sign; // the sign of the output is the product of the signs.
+    free(digitCopy1);
+    free(digitCopy2);
     return output;
 }
 
 int main(void) {
-    bigInt bigNum1 = initBigInt("1001");
-    bigInt bigNum2 = initBigInt("799");
-    bigInt * bigNum3 = naiveMultiplication(&bigNum1, &bigNum2);
+      bigInt bigNum1 = initBigInt("-122");
+      bigInt bigNum2 = initBigInt("78999");
+      bigInt * bigNum3 = naiveMultiplication(&bigNum1, &bigNum2);
+      printf(" Representation: %s\n Digit Count: %d \n Sign: %d\n", bigNum3->representation, bigNum3->digitCount, bigNum3->sign);
+      for (int i = 0; i < bigNum3->digitCount; i++) {
+          printf("%d \n", bigNum3->digits[i]);
+      }
+      free(bigNum1.representation);
+      free(bigNum1.digits);
+      free(bigNum2.digits);
+      free(bigNum2.representation);
+      free(bigNum3->representation);
+      free(bigNum3->digits);
+      free(bigNum3);
 
-    printf(" Representation: %s\n Digit Count: %d \n Sign: %d\n", bigNum3->representation, bigNum3->digitCount, bigNum3->sign);
-    
-    for (int i = 0; i < bigNum3->digitCount; i++) {
-        printf("%d \n", bigNum3->digits[i]);
-    }
-    free(bigNum1.representation);
-    free(bigNum1.digits);
-    free(bigNum2.digits);
-    free(bigNum2.representation);
     return 0;
 }
