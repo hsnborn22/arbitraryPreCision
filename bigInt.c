@@ -1,3 +1,4 @@
+// Include the dependencies we will need for this library.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,7 +47,18 @@ char * getDigitStringFrom(int * digits, int digitLength, int sign) {
     return outputString;
 }
 
-// initBigInt method to initialize a bigInt object
+/* ====================== initBigInt Function ============================= 
+
+This function initializes a bigInt object: the input is the string we want
+to use to initialize the object.
+e.g. initBigInt("56") will initialize the bigInt with the following fields:
+digits = [5,6] 
+representation = "56"
+sign = 1
+digitCount = 2
+
+========================================================================== */
+
 bigInt initBigInt(char * initString) {
     bigInt output;
     int i = 0;
@@ -118,7 +130,13 @@ bigInt initBigInt(char * initString) {
     return output; 
 }
 
-// negateBigInt function: this function changes the sign of a bigInt
+/* ==================== negateBigInt Function ============================= 
+
+-INPUT: The bigInt we want to negate; the input is of type bigInt* 
+-OUTPUT: The negation of the input, i.e. - input.
+
+========================================================================== */
+
 bigInt * negateBigInt(bigInt * bVar) {
     // Declare the bigInt variable we're going to return
     bigInt * output = malloc(sizeof(struct BIG_INT_STRUCT)); 
@@ -148,6 +166,13 @@ bigInt * negateBigInt(bigInt * bVar) {
     return output;     
 }
 
+/* ==================== reverseNumberArray Function ============================= 
+
+-INPUT: The array we want to reverse (int *) and its length (int). 
+-OUTPUT: The array reversed.
+
+================================================================================= */
+
 int * reverseNumberArray(int * array, int length) {
     int * result = malloc(sizeof(int) * length);
     if (result == NULL) {
@@ -158,6 +183,13 @@ int * reverseNumberArray(int * array, int length) {
     }
     return result;
 }
+
+/* ==================== copyBigInt Function ============================= 
+
+-INPUT: The bigInt we want to copy; the input is of type bigInt* 
+-OUTPUT: A copy of the input
+
+========================================================================== */
 
 bigInt * copyBigInt(bigInt * numToCopy) {
     bigInt * result = malloc(sizeof(struct BIG_INT_STRUCT));
@@ -171,15 +203,53 @@ bigInt * copyBigInt(bigInt * numToCopy) {
     return result;
 }
 
+/* ==================== copyBigIntTo Procedure ============================= 
+
+-INPUTS: The first input is the destination location, whereas the second 
+destination is the source; the type of both inputs is bigInt *.
+Effect: The procedure copies the source bigInt into the destination.
+
+=========================================================================== */
+
 void copyBigIntTo(bigInt * destination, bigInt * numToCopy) {
-    int isNegative = (numToCopy->sign  == -1);
-    destination->digitCount = numToCopy->digitCount; 
-    destination->sign = numToCopy->sign; 
-    destination->representation = malloc(sizeof(char)*(numToCopy->digitCount + isNegative+1));
-    strcpy(destination->representation, numToCopy->representation);
-    destination->digits = malloc(sizeof(int) * (numToCopy->digitCount));
-    memcpy(destination->digits, numToCopy->digits, sizeof(char)*(numToCopy->digitCount + isNegative + 1));
+    int isNegative = (numToCopy->sign  == -1); // this flag yields 1 if the number to copy is negative and 0 if the number to copy is positive.
+    destination->digitCount = numToCopy->digitCount; // copy the digitCount entry
+    destination->sign = numToCopy->sign; // copy the sign
+    destination->representation = malloc(sizeof(char)*(numToCopy->digitCount + isNegative+1)); // allocate space for the string representation of our number 
+    strcpy(destination->representation, numToCopy->representation); // copy the representation
+    destination->digits = malloc(sizeof(int) * (numToCopy->digitCount)); // allocate space for the digit array
+    memcpy(destination->digits, numToCopy->digits, sizeof(char)*(numToCopy->digitCount + isNegative + 1)); // copy the digit array.
 }
+
+/* ==================== deallocateBigInt Procedure ============================= 
+
+-INPUT: BigInt we want to deallocate.
+Effect: The procedure deallocates the bigInt we passed as an input.
+
+================================================================================ */
+
+void deallocateBigInt(bigInt * number) {
+    free(number->digits);
+    free(number->representation);
+    free(number);
+}
+
+/* ==================== deallocateBigIntFields Procedure ============================= 
+
+-INPUT: BigInt whose fields we want to deallocate.
+Effect: The procedure deallocates the fields containing the string representation and
+int digit array of the bigInt, without deallocating the bigInt pointer itself.
+
+===================================================================================== */
+
+void deallocateBigIntFields(bigInt * number) {
+    free(number->digits);
+    free(number->representation);
+}
+
+// The behaviour of the following three functions is rather straightforward; they will
+// return 1 if the bigInt we pass as an output is, respectively, positive, negative or 0
+// and return 0 otherwise.
 
 int isBigIntPositive(bigInt bVar) {
     int returnValue = (bVar.sign == 1) ? 1 : 0;
