@@ -6,8 +6,8 @@ int main(void) {
     char ad[] = "%d";
     char as[] = "%s";
     for (int i = 0; i < length-2; i+= 2) {
-        printf("printf(\"Subtraction between: %d and %d. Expected result: %d \"); \n", arr[i], arr[i+1], arr[i] - arr[i+1]);
-        printf("bigNum1 = initBigInt(\"%d\");\nbigNum2 = initBigInt(\"%d\");\nbigNum3 = subBigInts(&bigNum1, &bigNum2); \nprintf(\" Representation: %s\\n Digit Count: %s \\n Sign: %s\\n\", bigNum3->representation, bigNum3->digitCount, bigNum3->sign); \nfor (int i = 0; i < bigNum3->digitCount; i++) {\n printf(\"%s \\n\", bigNum3->digits[i]);\n}\nfree(bigNum1.representation);\nfree(bigNum1.digits);\nfree(bigNum2.digits);\nfree(bigNum2.representation);\n", arr[i], arr[i+1], as,ad,ad,ad);
+        printf("printf(\"Product between: %d and %d. Expected result: %d \"); \n", arr[i], arr[i+1], arr[i] * arr[i+1]);
+        printf("bigNum1 = initBigInt(\"%d\");\nbigNum2 = initBigInt(\"%d\");\nbigNum3 = naiveMultiplication(&bigNum1, &bigNum2); \nprintf(\" Representation: %s\\n Digit Count: %s \\n Sign: %s\\n\", bigNum3->representation, bigNum3->digitCount, bigNum3->sign); \nfor (int i = 0; i < bigNum3->digitCount; i++) {\n printf(\"%s \\n\", bigNum3->digits[i]);\n}\nfree(bigNum1.representation);\nfree(bigNum1.digits);\nfree(bigNum2.digits);\nfree(bigNum2.representation);\nfree(bigNum3->representation);\nfree(bigNum3->digits);\nfree(bigNum3);\n", arr[i], arr[i+1], as,ad,ad,ad);
     }
     return 0;
 }
