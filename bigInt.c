@@ -342,7 +342,7 @@ bigInt * bigIntShiftLeftDecimal(bigInt * number, int amount) {
     output->sign = number->sign; 
     output->digits = malloc(sizeof(int) * number->digitCount);
     memcpy(output->digits, number->digits, sizeof(int) * number->digitCount);
-    decimalLeftShiftArray(output->digits, number->digitCount, amount);
+    decimalLeftShiftArray(&output->digits, number->digitCount, amount);
     output->representation = getDigitStringFrom(output->digits, output->digitCount, output->sign);
     return output; 
 }

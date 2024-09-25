@@ -6,7 +6,9 @@
 
 bigInt * splitLow(bigInt * num, int index) {
     if (index >= num->digitCount) {
-        return num;
+        bigInt * output = malloc(sizeof(struct BIG_INT_STRUCT));
+        copyBigIntTo(output, num); 
+        return output;
     } else {
         bigInt * output = malloc(sizeof(struct BIG_INT_STRUCT));
         int signFlag = (num->sign == -1) ? 1 : 0;
@@ -54,7 +56,7 @@ bigInt * karatsuba(bigInt * num1, bigInt * num2) {
         bigInt * output = naiveMultiplication(num1, num2);
         return output;
     }
-    int m = max(num1, num2); 
+    int m = max(num1->digitCount, num2->digitCount); 
     int m2 = m / 2;
 
     bigInt * high1 = splitHigh(num1, m2);
@@ -63,30 +65,52 @@ bigInt * karatsuba(bigInt * num1, bigInt * num2) {
     bigInt * low2 = splitLow(num2, m2);
 
     bigInt * z0 = karatsuba(low1,low2);
-    bigInt * z2 = karasuba(high1,high2);
+    bigInt * z2 = karatsuba(high1,high2);
     bigInt * tempZ1a = sumBigInts(low1,high1); 
     bigInt * tempZ1b = sumBigInts(low2,high2);
+    // at this point we're done with the low and high numbers, so let's deallocate them
+    deallocateBigInt(high1);
+    deallocateBigInt(high2);
+    deallocateBigInt(low1);
+    deallocateBigInt(low2);
     bigInt * z1 = karatsuba(tempZ1a, tempZ1b);
+    // lets deallocate tempZ1a tempZ1b
+    deallocateBigInt(tempZ1a);
+    deallocateBigInt(tempZ1b);
     
     bigInt * midTermTemp = subBigInts(z1, z2);
     bigInt * midTerm = subBigInts(midTermTemp, z0); 
+    deallocateBigInt(midTermTemp);
     
     bigInt * outputTemp0 = bigIntShiftLeftDecimal(midTerm, m2);
+    deallocateBigInt(midTerm);
     bigInt * outputTemp1 = bigIntShiftLeftDecimal(z2, m2 * 2);
     bigInt * outputTemp2 = sumBigInts(outputTemp0, outputTemp1);
     bigInt * output = sumBigInts(outputTemp2, z0);
+    deallocateBigInt(outputTemp0);
+    deallocateBigInt(outputTemp1);
+    deallocateBigInt(outputTemp2);
+    deallocateBigInt(z0);
+    deallocateBigInt(z1);
+    deallocateBigInt(z2);
     return output; 
 }
 
 int main(void) {
-    bigInt num1 = initBigInt("100");
-    bigInt num2 = initBigInt("201");
+    bigInt num1 = initBigInt("131");
+    bigInt num2 = initBigInt("4871323");
     bigInt * num3 = karatsuba(&num1, &num2);
 
-    free(num1->representation);
-    free(num1->digits);
-    free(num2->representation);
-    free(num2->digits);
+    printf("Sign: %d \nRepresentation: %s\nDigit Count: %d\n", num3->sign, num3->representation, num3->digitCount);
+    
+    for (int i = 0; i < num3->digitCount;i ++) {
+        printf("%d\n", num3->digits[i]);
+    }
+
+    free(num1.representation);
+    free(num1.digits);
+    free(num2.representation);
+    free(num2.digits);
 
     free(num3->representation);
     free(num3->digits);

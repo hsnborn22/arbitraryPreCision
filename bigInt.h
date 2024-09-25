@@ -11,3 +11,8 @@ bigInt * naiveMultiplication(bigInt *int1, bigInt * int2);
 
 char * getDigitStringFrom(int * digits, int digitLength, int sign);
 bigInt * bigIntShiftLeftDecimal(bigInt * number, int amount);
+
+bigInt initBigInt(char * initString);
+void deallocateBigInt(bigInt * number);
+void deallocateBigIntFields(bigInt * number);
+void copyBigIntTo(bigInt * destination, bigInt * numToCopy);
