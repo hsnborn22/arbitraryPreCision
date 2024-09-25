@@ -199,7 +199,7 @@ bigInt * copyBigInt(bigInt * numToCopy) {
     result->representation = malloc(sizeof(char)*(numToCopy->digitCount + isNegative+1));
     strcpy(result->representation, numToCopy->representation);
     result->digits = malloc(sizeof(int) * (numToCopy->digitCount));
-    memcpy(result->digits, numToCopy->digits, sizeof(char)*(numToCopy->digitCount + isNegative + 1));
+    memcpy(result->digits, numToCopy->digits, sizeof(int)*(numToCopy->digitCount + isNegative + 1));
     return result;
 }
 
@@ -218,7 +218,7 @@ void copyBigIntTo(bigInt * destination, bigInt * numToCopy) {
     destination->representation = malloc(sizeof(char)*(numToCopy->digitCount + isNegative+1)); // allocate space for the string representation of our number 
     strcpy(destination->representation, numToCopy->representation); // copy the representation
     destination->digits = malloc(sizeof(int) * (numToCopy->digitCount)); // allocate space for the digit array
-    memcpy(destination->digits, numToCopy->digits, sizeof(char)*(numToCopy->digitCount + isNegative + 1)); // copy the digit array.
+    memcpy(destination->digits, numToCopy->digits, sizeof(int)*(numToCopy->digitCount + isNegative + 1)); // copy the digit array.
 }
 
 /* ==================== deallocateBigInt Procedure ============================= 
@@ -387,6 +387,7 @@ bigInt * subBigInts(bigInt * int1, bigInt * int2) {
         } else if (bigIntIsEqual(int1,int2)) {
             // sub-case #2: if the two numbers are equal, return 0
             int * fDig = calloc(1,sizeof(int)); // array of size one that will store the digits of output ([0]). By callocing it we already init it to 0 so we dont need to modify its values.
+            fDig[0] = 0;
             char * fStr = malloc(sizeof(char)*2); // the string representation of our output; it will be comprised of only two chars, the 0 value and the null terminator (\0).
             fStr[0] = '0';
             fStr[1] = '\0';
@@ -426,6 +427,7 @@ bigInt * subBigInts(bigInt * int1, bigInt * int2) {
         int2->sign = -1; // as in the case before, temporairily set sign to be -1
         bigInt * temp = sumBigInts(int1,int2); // compute the sum of the two negative values.
         copyBigIntTo(output, temp);
+        output->sign = -1;
         deallocateBigInt(temp);
         int2->sign = 1;
     } else if (int1->sign == 0) {
@@ -597,5 +599,5 @@ bigInt * naiveMultiplication(bigInt * int1, bigInt * int2) {
 }
 
 int main(void) {
-  return 0;
+    return 0;
 }
