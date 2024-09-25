@@ -336,6 +336,17 @@ int bigIntIsEqual(bigInt* int1, bigInt * int2) {
     return (bigIntCmp(int1,int2) == 0) ? 1:0;
 }
 
+bigInt * bigIntShiftLeftDecimal(bigInt * number, int amount) {
+    bigInt * output = malloc(sizeof(struct BIG_INT_STRUCT));
+    output->digitCount = number->digitCount + amount; 
+    output->sign = number->sign; 
+    output->digits = malloc(sizeof(int) * number->digitCount);
+    memcpy(output->digits, number->digits, sizeof(int) * number->digitCount);
+    decimalLeftShiftArray(output->digits, number->digitCount, amount);
+    output->representation = getDigitStringFrom(output->digits, output->digitCount, output->sign);
+    return output; 
+}
+
 bigInt * subBigInts(bigInt * int1, bigInt * int2) {
     bigInt * output = calloc(1,sizeof(struct BIG_INT_STRUCT));
     // case #1: both numbers are positive.
@@ -598,6 +609,3 @@ bigInt * naiveMultiplication(bigInt * int1, bigInt * int2) {
     return output;
 }
 
-int main(void) {
-    return 0;
-}
